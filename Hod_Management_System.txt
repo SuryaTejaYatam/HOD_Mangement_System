@@ -1,0 +1,2929 @@
+                                                                     <<...HOD MANAGEMENT SYSTEM...>>
+                                                                                                      SURYA TEJA YATAM (20A21A05G4)
+                                                    ---------------------------------------------------------------------------------------
+
+---DEVICE & OS SPECIFICATIONS---
+
+-->Device name	      :PawanKalyan
+-->Processor	      :11th Gen Intel(R) Core(TM) i5-11320H @ 3.20GHz   2.50 GHz
+-->Installed RAM      :8.00 GB (7.79 GB usable)
+-->System type	      :64-bit operating system, x64-based processor   -----
+-->Edition	      :Windows 11 Home Single Language
+-->Version            :23H2
+
+---REQUIREMENTS---
+
+-->1.Java Development Kit (JDK)
+-->2.Integrated Development Environment (IDE)  --------
+-->3.Spring Initializr
+-->4.MySQL Database
+-->5.React.js
+-->6.Bootstrap
+
+
+---CREATING A SPRING STARTER PROJECT---
+
+-->Project name- Hod Management System
+-->Root package name- com.example
+-->Project type- Maven
+-->Packing- JAR
+-->Language: Java
+-->Java version: 17
+-->Spring Boot Version: 3.2.0
+
+---DEPENDENCIES---
+
+-->Spring web
+-->Spring dev tools
+-->Spring Data JPA
+-->MySQL Driver
+-->Lombok
+-->Validation
+
+-->Update a appilication.properties with your MySQL database configuration.
+ 
+spring.datasource.url=jdbc:mysql://localhost:3306/Sun?createDatabaseIfNotExist=true
+spring.datasource.username=root
+spring.datasource.password=Surya@555
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=update
+server.port:8090
+
+
+                   ******************************************************************************************************************************************
+
+
+
+-->Create the Entity package I am creating a classes for representing the structure of data in my application,one of the class is Subjects that was controlled by the Hod ,the class conatins the attributes
+
+SUBJECTS CLASSS:
+
+    -id : auto generated
+    -year: which year
+    -subName: Subject name
+    -subCode: Subject code that should ge unique
+    -teacherName: The subject will allocate to the Teacher
+
+
+package com.example.StudentMangementSystem.Student1.Entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@Table(name = "subjects")
+public class Subjects {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    private Long id;
+    private String year;
+    private String subName;
+    @Column(unique = true)
+    private String subCode;
+    private String teacherName;
+
+}
+
+                   *******************************************************************************************************************************************
+
+
+-->Create a Repository package in the src/main/java,Create an HodRepository interface extending JpaRepository<Subjects, Long> to handle CRUD operations.
+
+*In the HodRepository interface ,use @Reapository annotation marks to define it is repository component in spring it add all the dependence that are reaquried in it.
+
+
+package com.example.StudentMangementSystem.Student1.Repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.example.StudentMangementSystem.Student1.Entity.Subjects;
+
+@Repository
+public interface HodRepository extends JpaRepository<Subjects, Long> {
+
+    public Subjects findByYearAndSubName(String year, String subName);
+
+    public List<Subjects> findByTeacherName(String teacherName);
+}
+
+
+                   *******************************************************************************************************************************************       
+
+
+-->Create a Service package in the src/main/java,Create a interface HodService that consists of the methods that perfrom the operations.
+
+
+package com.example.StudentMangementSystem.Student1.Service;
+
+import java.util.List;
+
+import com.example.StudentMangementSystem.Student1.Entity.Subjects;
+
+public interface HodService {
+
+    String addTheSub(Subjects subjects);
+
+    List<Subjects> getAllSubjects();
+
+    public Subjects getSubByDetails(String year, String subName);
+
+    public void deleteSubDetails(String year, String subName);
+
+}
+
+                   *******************************************************************************************************************************************       
+
+
+-->In the Service package in the src/main/java,Create a Class HodServiceImp that extends the interface HodService form the same package Service . It contains the actual implementation of CRUD operations for Subjects.
+
+*In the HodServiceImp class which was implements HodService interface ,use @Service annotation marks to define it is Service component in spring it add all the dependence that are reaquried in it.
+
+*HodServiceImp uses HodRepository to perfrom crud operations realeted to Subjects Table.
+
+*In the every contains various methods such as addTheSub,getAllSubjects,getSubByDetails,updateSubByDetails,deleteSubDetails that contains actual logic in the method.
+
+
+package com.example.StudentMangementSystem.Student1.Service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.StudentMangementSystem.Student1.Entity.Subjects;
+import com.example.StudentMangementSystem.Student1.Repository.HodRepository;
+
+@Service
+public class HodServiceImp implements HodService {
+
+    @Autowired
+    private HodRepository hodRepository;
+
+    public String addTheSub(Subjects subjects) {
+        hodRepository.save(subjects);
+        return "SAVED";
+    }
+
+    public List<Subjects> getAllSubjects() {
+
+        List<Subjects> subjects = hodRepository.findAll();
+        return subjects;
+    }
+
+    public Subjects getSubByDetails(String year, String subName) {
+
+        Subjects subjects = hodRepository.findByYearAndSubName(year, subName);
+        return subjects;
+    }
+
+    public Subjects updateSubByDetails(String year, String subName, Subjects subjects) {
+
+        Subjects sub = hodRepository.findByYearAndSubName(year, subName);
+
+        sub.setYear(subjects.getYear());
+        sub.setSubName(subjects.getSubName());
+        sub.setSubCode(subjects.getSubCode());
+        sub.setTeacherName(subjects.getTeacherName());
+
+        hodRepository.save(sub);
+        return sub;
+    }
+
+    public void deleteSubDetails(String year, String subName) {
+        Subjects sub = hodRepository.findByYearAndSubName(year, subName);
+        hodRepository.delete(sub);
+    }
+
+}
+
+                   *******************************************************************************************************************************************   
+
+
+-->creating a Controller package in the src/main/java,then create a class HodController used to perform various operation by handling the http requets.
+
+*In the HodController Class ,use @RestController annotation marks to define it is Controller component in spring it add all the dependence that are reaquried in it.
+
+*In the HodController Class,it is used to perform http requets ,its call the HodServiceImp to perfom the logic in it.
+
+@RestController:
+ The @RestController annotation is a specialized version of the  @Controller  annotation. It is used to indicate that the class defines a RESTful API endpoint.
+ When you annotate a class with @RestController, it implies that every method inside the class is treated as a controller method and returns the response in a format suitable for RESTful services (typically JSON).
+@RequestMapping:
+ The @RequestMapping annotation is used to map web requests to specific methods in a controller class. It can be applied at the class level and/or method level.
+ It allows you to define the base URL for all the methods in the class and then further refine the URI for each method.
+ It can specify the HTTP method (GET, POST, PUT, DELETE) and other request parameters
+
+ Then after run the application. the application will run on port 8090 in Apache Tomcat server
+
+
+-->Testing CRUD Operations with Postman
+
+
+@GetMapping:(Read Operation)
+•  This annotation here it retrives all the Subjects data ,,, this is the URL: " http://localhost:8090/HOD/AllSubjects "
+
+ @PostMapping:(Create Operation)
+ This annotation used for adding a new  studnt "http://localhost:8090/HOD/addTheSub"
+
+
+@PutMapping:(Update Operation )
+
+ This annotation maps the HTTP PUT request to the "http://localhost:8090/HOD/updateSujectsDetails//{year}/{subName}" URI. It is used for updating Studnetdetails ..
+
+@DeleteMapping:(Delete Operation)
+
+ This Annotation used for deleting a student based on their Id ......http://localhost:8090/HOD/Delete/{year}/{subName} where {year},{subName} is the year ans subjectName of the Subjects in the table to be deleted .
+
+
+package com.example.StudentMangementSystem.Student1.Controller;
+
+
+import java.util.List;
+import java.util.Objects;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import  com.example.StudentMangementSystem.Student1.Entity.Subjects;
+import com.example.StudentMangementSystem.Student1.Service.HodServiceImp;
+
+@RestController
+@RequestMapping("/HOD")
+@CrossOrigin(origins="http://localhost:3000")
+public class HodController {
+
+    @Autowired
+    private HodServiceImp hodService;
+    @PostMapping("/addTheSub")
+    public ResponseEntity<String> addTheSub(@RequestBody Subjects subjects)
+    {
+        hodService.addTheSub(subjects);
+        return ResponseEntity.status(HttpStatus.CREATED).body("SAVED");
+    }
+
+    @GetMapping("/AllSubjects")
+    public ResponseEntity<List<Subjects>> getAllSubjects()
+    {
+        List<Subjects> subjects=hodService.getAllSubjects();
+        if (Objects.nonNull(subjects)) {
+          return  ResponseEntity.status(HttpStatus.ACCEPTED).body(subjects);
+        }
+        else{
+           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+        
+    }
+    @GetMapping("/Subjects/{year}/{subName}")
+    public ResponseEntity<Subjects>  getSubByDetails(@PathVariable("year")String year,@PathVariable("subName") String subName){
+
+        Subjects subjects=hodService.getSubByDetails(year,subName);
+        if (Objects.nonNull(subjects)) {
+          return  ResponseEntity.status(HttpStatus.ACCEPTED).body(subjects);
+        }
+        else{
+           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+
+        
+    }
+    @PutMapping("/updateSujectsDetails/{year}/{subName}")
+     public ResponseEntity<Subjects>  updateSubByDetails(@PathVariable("year")String year,@PathVariable("subName") String subName ,@RequestBody Subjects subjects){
+
+    
+         Subjects subject=hodService.updateSubByDetails(year,subName,subjects);
+
+        if (Objects.nonNull(subject)) {
+          return  ResponseEntity.status(HttpStatus.ACCEPTED).body(subject);
+        }
+        else{
+           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+     }
+      @DeleteMapping("/Delete/{year}/{subName}")
+      public String deleteSubDetails(@PathVariable("year")String year,@PathVariable("subName") String subName)
+      {
+        hodService.deleteSubDetails(year,subName);
+        return "Deleted";
+
+      }
+    
+}
+
+                  *******************************************************************************************************************************************   
+
+-->In the Entity package I am creating a classes for representing the structure of data in my application,one of the class is Teacher that was controlled by the Teacher ,the class conatins the attributes
+
+TEACHER CLASSS:
+
+    -id : auto generated
+    -year: which year
+    -subName: Subject name
+    -subCode: Subject code that should ge unique
+    -teacherName: The subject will allocate to the Teacher
+    -url:The teacher should post the material to the allocated subject.
+
+
+package com.example.StudentMangementSystem.Student1.Entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class Teacher {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String year;
+    private String subName;
+    @Column(unique = true)
+    private String subCode;
+    private String teacherName;
+    private String url;
+
+}
+
+
+                  *******************************************************************************************************************************************   
+
+-->In a Repository package in the src/main/java,Create an TeacherRepository interface extending JpaRepository<Teacher, Long> to handle CRUD operations.
+
+*In the TeacherRepository interface ,use @Reapository annotation marks to define it is repository component in spring it add all the dependence that are reaquried in it.
+
+package com.example.StudentMangementSystem.Student1.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.example.StudentMangementSystem.Student1.Entity.Student;
+import com.example.StudentMangementSystem.Student1.Entity.Teacher;
+
+@Repository
+public interface TeacherRepository extends JpaRepository<Teacher, Long> {
+    Teacher findBySubCode(String subCode);
+
+    List<Teacher> findByYear(String year);
+
+    void save(Student student);
+
+    Optional<Teacher> findBySubNameAndYearAndTeacherName(String subName, String year, String teacherName);
+
+    boolean existsBySubCode(String subCode);
+
+}
+
+                  ******************************************************************************************************************************************* 
+
+-->In a Service package in the src/main/java,Create a interface TeacherService that consists of the methods that perfrom the operations.
+
+package com.example.StudentMangementSystem.Student1.Service;
+
+import java.util.List;
+
+import com.example.StudentMangementSystem.Student1.Entity.Teacher;
+
+public interface TeacherService {
+
+    List<Teacher> getAllSubByTeacherName(String teacherName);
+
+    void placingMaterial(String subCode, Teacher teacher);
+
+    Teacher updatingMaterial(String subCode, Teacher teacher);
+
+}
+
+                  ******************************************************************************************************************************************* 
+
+-->In the Service package in the src/main/java,Create a Class TeacherServiceImp that extends the interface TeacherService form the same package Service . It contains the actual 
+
+implementation of CRUD operations for Teacher.
+
+*In the TeacherServiceImp class which was implements TecherService interface ,use @Service annotation marks to define it is Service component in spring it add all the dependence that are reaquried in it.
+
+*TeacherServiceImp uses TeacherRepository to perfrom crud operations related to Teacher Table.
+
+*It is also uses HodRepository that used to store allocated particular Subject to the particual teacher.
+
+*In the every contains various methods such as getAllSubByTeacherName,placingMaterial,updatingMaterial that contains actual logic in the method.
+
+
+
+package com.example.StudentMangementSystem.Student1.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.StudentMangementSystem.Student1.Entity.Subjects;
+import com.example.StudentMangementSystem.Student1.Entity.Teacher;
+import com.example.StudentMangementSystem.Student1.Error.detailsNotFoundException;
+import com.example.StudentMangementSystem.Student1.Repository.HodRepository;
+import com.example.StudentMangementSystem.Student1.Repository.TeacherRepository;
+
+@Service
+public class TeacherServiceImp implements TeacherService {
+
+  @Autowired
+  private TeacherRepository teacherRepository;
+
+  @Autowired
+  private HodRepository hodRepository;
+
+  @Override
+  public List<Teacher> getAllSubByTeacherName(String teacherName) {
+    List<Subjects> subjects = hodRepository.findByTeacherName(teacherName);
+    List<Teacher> teachersList = new ArrayList<>();
+
+    for (Subjects subject : subjects) {
+      String subCode = subject.getSubCode();
+
+      // Check if the subCode already exists in the TeacherRepository
+      if (!teacherRepository.existsBySubCode(subCode)) {
+        Teacher teacher = new Teacher();
+
+        teacher.setSubName(subject.getSubName());
+        teacher.setYear(subject.getYear());
+        teacher.setTeacherName(subject.getTeacherName());
+        teacher.setSubCode(subCode);
+
+        teachersList.add(teacher);
+      }
+    }
+
+    // Save only the unique teachers to TeacherRepository
+    teacherRepository.saveAll(teachersList);
+    List<Teacher> teachers = teacherRepository.findAll();
+    return teachers;
+  }
+
+  @Override
+  public void placingMaterial(String subCode, Teacher teacher) {
+
+    Teacher teacher2 = teacherRepository.findBySubCode(subCode);
+    if (Objects.nonNull(teacher2)) {
+      teacher2.setUrl(teacher.getUrl());
+      teacherRepository.save(teacher2);
+    } else {
+      throw new detailsNotFoundException("THERE IS NO SUBJECT WITH THE CODE ");
+    }
+  }
+
+  @Override
+  public Teacher updatingMaterial(String subCode, Teacher teacher) {
+
+    Teacher teacher2 = teacherRepository.findBySubCode(subCode);
+
+    if (Objects.nonNull(teacher2)) {
+      teacher2.setUrl(teacher.getUrl());
+      teacherRepository.save(teacher2);
+      return teacher2;
+    } else {
+      throw new detailsNotFoundException("THERE IS NO SUBJECT WITH THE CODE ");
+    }
+
+  }
+
+}
+
+                  *******************************************************************************************************************************************
+ 
+
+-->In a Controller package in the src/main/java,then create a class TeacherController used to perform various operation by handling the http requets.
+
+*In the TeacherController Class ,use @RestController annotation marks to define it is Controller component in spring it add all the dependence that are reaquried in it.
+
+*In the TeacherController Class,it is used to perform http requets ,its call the TeacherServiceImp to perfom the logic in it.
+
+@RestController:
+ The @RestController annotation is a specialized version of the  @Controller  annotation. It is used to indicate that the class defines a RESTful API endpoint.
+ When you annotate a class with @RestController, it implies that every method inside the class is treated as a controller method and returns the response in a format suitable for RESTful services (typically JSON).
+@RequestMapping:
+ The @RequestMapping annotation is used to map web requests to specific methods in a controller class. It can be applied at the class level and/or method level.
+ It allows you to define the base URL for all the methods in the class and then further refine the URI for each method.
+ It can specify the HTTP method (GET, POST, PUT) and other request parameters
+
+ Then after run the application, the application will run on port 8090 in Apache Tomcat server
+
+
+-->Testing CRUD Operations with Postman
+
+
+@GetMapping:(Read Operation)
+•  This annotation here it retrives all the Subjects data ,,, this is the URL: " http://localhost:8090/Teacher/ "
+
+ @PostMapping:(Create Operation)
+ This annotation used for adding a new  studnt "http://localhost:8090/Teacher/material/{subCode}"
+
+
+@PutMapping:(Update Operation )
+
+ This annotation maps the HTTP PUT request to the "http://localhost:8090/Teacher/updateSujectsDetails/material/{subCode}" URI. It is used for updating usinf the subCode ..
+
+
+package com.example.StudentMangementSystem.Student1.Controller;
+
+import java.util.List;
+import java.util.Objects;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.StudentMangementSystem.Student1.Entity.Teacher;
+import com.example.StudentMangementSystem.Student1.Service.TeacherService;
+
+@RestController
+@RequestMapping("/Teacher")
+@CrossOrigin(origins = "http://localhost:3000")
+public class TeacherController {
+
+    private final LoginTeacherController loginTeacherController;
+
+    @Autowired
+    public TeacherController(LoginTeacherController loginTeacherController) {
+        this.loginTeacherController = loginTeacherController;
+    }
+
+    @Autowired
+    private TeacherService teacherService;
+
+    @GetMapping("/")
+    public List<Teacher> getAllSubByTeacherName() {
+        String teacherName = loginTeacherController.name;
+        return teacherService.getAllSubByTeacherName(teacherName);
+
+    }
+
+    @PostMapping("/material/{subCode}")
+    public String placingMaterial(@PathVariable("subCode") String subCode, @RequestBody Teacher teacher) {
+
+        teacherService.placingMaterial(subCode, teacher);
+        return "Material is Posted";
+    }
+
+    @PutMapping("/material/{subCode}")
+    public ResponseEntity<Teacher> updatingMaterial(@PathVariable("subCode") String subCode,
+            @RequestBody Teacher teacher) {
+
+        Teacher teacher2 = teacherService.updatingMaterial(subCode, teacher);
+        if (Objects.nonNull(teacher2)) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(teacher2);
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
+}
+
+
+
+                  *******************************************************************************************************************************************
+
+-->In the Entity package I am creating a classes for representing the structure of data in my application,one of the class is StudentRegistration where it is used to help the register the student ,the class conatins the attributes
+
+StudentRegistration CLASSS:
+
+    -id : auto generated.
+    -firstName:First Name of the Student
+    -lastName:Last Name of the student.
+    -registrationNumber:Student Register Number that Should be unique.
+    -emailId:It should be in the valid form.
+    -phoneNumber:Student Phone Number.
+    -branch:Branch of the Student.
+    -year:Year of Student Studing
+
+
+package com.example.StudentMangementSystem.Student1.Entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Table(name = "StudentRegistration")
+public class StudentRegistration {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String firstName;
+    private String lastName;
+    @NotBlank(message = "Registration Number is required")
+    private String registrationNumber;
+    @Email(message = "Email should be valid")
+    private String emailId;
+    private String phoneNumber;
+    private String branch;
+    private String year;
+
+}
+
+
+                  *******************************************************************************************************************************************
+
+
+-->In a Repository package in the src/main/java,Create an StudentRegistrationRepository interface extending JpaRepository<StudentRegistration, Long> to handle CRUD operations.
+
+*In the StudentRegistrationRepository interface ,use @Reapository annotation marks to define it is repository component in spring it add all the dependence that are reaquried in it.
+
+package com.example.StudentMangementSystem.Student1.Repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.example.StudentMangementSystem.Student1.Entity.StudentRegistration;
+
+@Repository
+public interface StudentRegistrationRepository extends JpaRepository<StudentRegistration, Long> {
+
+}
+
+
+                  *******************************************************************************************************************************************
+
+
+-->In the Service package in the src/main/java,Create a Class StudentRegistrationService . It contains the actual implementation of CRUD operations for StudentRegistration.
+
+*In the StudentRegistrationService class,use @Service annotation marks to define it is Service component in spring it add all the dependence that are reaquried in it.
+
+*StudentRegistrationService uses StudentRegistrationRepository to perfrom crud operations related to StudentRegistration Table.
+
+*In the Class contains  method such as studentRegistrationl that contains actual logic in the method.
+
+
+package com.example.StudentMangementSystem.Student1.Service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.StudentMangementSystem.Student1.Entity.StudentRegistration;
+import com.example.StudentMangementSystem.Student1.Repository.StudentRegistrationRepository;
+
+@Service
+public class StudentRegistrationService {
+
+    @Autowired
+    private StudentRegistrationRepository studentRegistrationRepository;
+
+    public String studentRegistration(StudentRegistration studentRegistration) {
+
+        StudentRegistration savedStudentRegistration = studentRegistrationRepository.save(studentRegistration);
+
+        String year = savedStudentRegistration.getYear();
+
+        return year;
+    }
+}
+
+
+
+                  *******************************************************************************************************************************************
+
+
+
+-->In a Controller package in the src/main/java,then create a class StudentRegistrationController used to perform various operation by handling the http requets.
+
+*In the StudentRegistrationController Class ,use @RestController annotation marks to define it is Controller component in spring it add all the dependence that are reaquried in it.
+
+*In the StudentRegistrationController Class,it is used to perform http requets ,its call the StudentRegistrationService to perfom the logic in it.
+
+@RestController:
+ The @RestController annotation is a specialized version of the  @Controller  annotation. It is used to indicate that the class defines a RESTful API endpoint.
+ When you annotate a class with @RestController, it implies that every method inside the class is treated as a controller method and returns the response in a format suitable for RESTful services (typically JSON).
+
+ Then after run the application, the application will run on port 8090 in Apache Tomcat server
+
+
+-->Testing CRUD Operations with Postman
+
+ @PostMapping:(Create Operation)
+ This annotation used for adding a new  studnt "http://localhost:8090/Student/StudentRegistrations"
+
+
+package com.example.StudentMangementSystem.Student1.Controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.StudentMangementSystem.Student1.Entity.StudentRegistration;
+import com.example.StudentMangementSystem.Student1.Service.StudentRegistrationService;
+
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/Student")
+@CrossOrigin(origins = "http://localhost:3000")
+public class StudentRegistrationController {
+
+    String year;
+
+    @Autowired
+    private StudentRegistrationService studentRegistrationService;
+
+    @PostMapping("/StudentRegistrations")
+    public String studentRegistration(@Valid @RequestBody StudentRegistration studentRegistration) {
+        year = studentRegistrationService.studentRegistration(studentRegistration);
+
+        return "Registered Successful";
+    }
+}
+
+
+
+                  *******************************************************************************************************************************************
+
+
+-->In the Entity package I am creating a classes for representing the structure of data in my application,one of the class is Student that was controlled by the Student ,the class conatins the attributes
+
+STUDENT CLASSS:
+
+    -id : auto generated
+    -registrationNumber:unique Register Number for the individual student
+    -subName: Subject name
+    -subCode: Subject code that should ge unique
+    -teacherName: The subject will allocate to the Teacher
+    -url:Material of the Subject
+    -year: Year of the Student Studing
+
+
+package com.example.StudentMangementSystem.Student1.Entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class Student {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String registrationNumber;
+    private String subName;
+    private String subCode;
+    private String teacherName;
+    private String url;
+}
+
+
+                  *******************************************************************************************************************************************
+
+-->In a Repository package in the src/main/java,Create an StudentRepository interface extending JpaRepository<Student, Long> to handle CRUD operations.
+
+*In the StudentRepository interface ,use @Reapository annotation marks to define it is repository component in spring it add all the dependence that are reaquried in it.
+
+
+package com.example.StudentMangementSystem.Student1.Repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.example.StudentMangementSystem.Student1.Entity.Student;
+
+@Repository
+public interface StudentRepository extends JpaRepository<Student, Long> {
+
+    List<Student> findByRegistrationNumber(String registrationNumber);
+
+    Student findByRegistrationNumberAndSubCode(String registrationNumber, String subCode);
+
+}
+
+
+                  *******************************************************************************************************************************************
+
+
+-->In a Service package in the src/main/java,Create a interface StudentService that consists of the methods that perfrom the operations.
+
+
+package com.example.StudentMangementSystem.Student1.Service;
+
+import java.util.List;
+
+import com.example.StudentMangementSystem.Student1.Entity.Student;
+import com.example.StudentMangementSystem.Student1.Entity.Teacher;
+
+public interface StudentService {
+
+    List<Teacher> getAllSub(String year);
+
+    List<Student> getSelectedSub(String registrationNumber, String getSelectedSub);
+
+    void deleteSubject(String registrationNumber, String subCode);
+
+    void addSubject(String subCode, Teacher teacher, String registration);
+}
+
+
+
+                  *******************************************************************************************************************************************
+
+
+-->In the Service package in the src/main/java,Create a Class StudentServiceImp that extends the interface StudentService form the same package Service . It contains the actual 
+
+implementation of CRUD operations for Student.
+
+*In the StudentServiceImp class which was implements StudentService interface ,use @Service annotation marks to define it is Service component in spring it add all the dependence that are reaquried in it.
+
+*StudentServiceImp uses StudentRepository to perfrom crud operations related to Student Table.
+
+*It is also uses TeacherRepository that used to store the all subjects in the year of the Student.
+
+*In the Class contains various methods such as getAllSub,addSubject,getSelectedSub,deleteSubject that contains actual logic in the method.
+
+
+package com.example.StudentMangementSystem.Student1.Service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.StudentMangementSystem.Student1.Entity.Student;
+import com.example.StudentMangementSystem.Student1.Entity.Teacher;
+import com.example.StudentMangementSystem.Student1.Repository.StudentRepository;
+import com.example.StudentMangementSystem.Student1.Repository.TeacherRepository;
+
+@Service
+public class StudentServiceImp implements StudentService {
+
+    @Autowired
+    private TeacherRepository teacherRepository;
+
+    @Autowired
+    private StudentRepository studentRepository;
+
+    @Override
+    public List<Teacher> getAllSub(String year) {
+
+        List<Teacher> teachers = teacherRepository.findByYear(year);
+
+        return teachers;
+    }
+
+    @Override
+    public void addSubject(String subCode, Teacher teacher, String registration) {
+
+        Teacher teachers = teacherRepository.findBySubCode(subCode);
+
+        Student student = new Student();
+
+        student.setSubName(teachers.getSubName());
+        student.setUrl(teachers.getUrl());
+        student.setTeacherName(teachers.getTeacherName());
+        student.setSubCode(teachers.getSubCode());
+        student.setRegistrationNumber(registration);
+
+        studentRepository.save(student);
+    }
+
+    @Override
+    public List<Student> getSelectedSub(String registrationNumber, String getSelectedSub) {
+
+        List<Student> students = studentRepository.findByRegistrationNumber(getSelectedSub);
+        return students;
+
+    }
+
+    @Override
+    public void deleteSubject(String registrationNumber, String subCode) {
+
+        Student student = studentRepository.findByRegistrationNumberAndSubCode(registrationNumber, subCode);
+
+        studentRepository.delete(student);
+    }
+}
+
+
+                  *******************************************************************************************************************************************
+
+
+-->In a Controller package in the src/main/java,then create a class StudentController used to perform various operation by handling the http requets.
+
+*In the StudentController Class ,use @RestController annotation marks to define it is Controller component in spring it add all the dependence that are reaquried in it.
+
+*In the StudentController Class,it is used to perform http requets ,its call the StudentService to perfom the logic in it.
+
+@RestController:
+ The @RestController annotation is a specialized version of the  @Controller  annotation. It is used to indicate that the class defines a RESTful API endpoint.
+ When you annotate a class with @RestController, it implies that every method inside the class is treated as a controller method and returns the response in a format suitable for RESTful services (typically JSON).
+@RequestMapping:
+ The @RequestMapping annotation is used to map web requests to specific methods in a controller class. It can be applied at the class level and/or method level.
+ It allows you to define the base URL for all the methods in the class and then further refine the URI for each method.
+ It can specify the HTTP method (GET, POST, PUT) and other request parameters
+
+ Then after run the application.  the application will run on port 8080 in Apache Tomcat server
+
+
+-->Testing CRUD Operations with Postman
+
+
+@GetMapping:(Read Operation)
+•  This annotation here it retrives all the Subjects data ,,, this is the URL: " http://localhost:8090/Student/allSubjects "
+
+ @PostMapping:(Create Operation)
+ This annotation used for adding a new  studnt "http://localhost:8090/Student/Subject/{subCode}"
+
+
+@DeleteMapping:(Delete Operation )
+
+ This annotation maps the HTTP Delete request to the "http://localhost:8090/Student/deleteSubject/{subCode} 
+
+package com.example.StudentMangementSystem.Student1.Controller;
+
+import java.util.List;
+import java.util.Objects;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.StudentMangementSystem.Student1.Entity.Student;
+import com.example.StudentMangementSystem.Student1.Entity.Teacher;
+import com.example.StudentMangementSystem.Student1.Service.StudentService;
+
+@RestController
+@RequestMapping("/Student")
+@CrossOrigin(origins = "http://localhost:3000")
+public class StudentController {
+
+    @Autowired
+    private StudentService studentService;
+
+    private final LoginStudentController loginStudentController;
+
+    @Autowired
+    public StudentController(LoginStudentController loginStudentController,
+            StudentRegistrationController studentRegistrationController) {
+        this.loginStudentController = loginStudentController;
+
+    }
+
+    @GetMapping("/allSubjects")
+    public ResponseEntity<List<Teacher>> getAllSub() {
+        String year = loginStudentController.years;
+        List<Teacher> teacher = studentService.getAllSub(year);
+
+        if (Objects.nonNull(teacher)) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(teacher);
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
+    @PostMapping("/Subject/{subCode}")
+    public String addSubject(@PathVariable("subCode") String subCode, @RequestBody Teacher teacher) {
+
+        String registration = loginStudentController.registration;
+        studentService.addSubject(subCode, teacher, registration);
+        return "Added";
+    }
+
+    @GetMapping("/Subject")
+    public ResponseEntity<List<Student>> getSelectedSub(String getSelectedSub) {
+        String registration = loginStudentController.registration;
+        List<Student> students = studentService.getSelectedSub(getSelectedSub, registration);
+
+        if (Objects.nonNull(students)) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(students);
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
+    @DeleteMapping("deleteSubject/{subCode}")
+    public String deleteSubject(@PathVariable("subCode") String subCode) {
+        String registration = loginStudentController.registration;
+        studentService.deleteSubject(registration, subCode);
+        return "Deleted";
+    }
+
+}
+
+
+                   *******************************************************************************************************************************************    
+
+-->creating a Entity package in the src/main/java
+
+-->In the Entity package I am creating a classes ,one of the class is Login that was used for the Login purpose for Both Hod and Teacher,the class conatins the attributes
+
+LOGIN CLASSS:
+     -id : auto generated
+     -username: Username for the Login
+     -password: Conform the admin
+
+
+package com.example.StudentMangementSystem.Student1.Entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "Login_Table")
+public class Login {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String username;
+    private String password;
+}
+
+
+
+
+                   ******************************************************************************************************************************************
+
+-->creating a Repository package in the src/main/java,Create an LoginHodRepository interface extending JpaRepository<Login, Long> to handle CRUD operations.
+
+*In the LoginHodRepository interface ,use @Reapository annotation marks to define it is repository component in spring it add all the dependence that are reaquried in it.
+
+
+package com.example.StudentMangementSystem.Student1.Repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.example.StudentMangementSystem.Student1.Entity.Login;
+
+@Repository
+public interface LoginHodRepository extends  JpaRepository<Login,Long> {
+
+    Login findByUsernameAndPassword(String username, String password);
+    
+}
+
+
+-->In a Repository package in the src/main/java,Create an LoginTeacherRepository interface extending JpaRepository<Login, Long> to handle CRUD operations.
+
+*In the LoginTeacherRepository interface ,use @Reapository annotation marks to define it is repository component in spring it add all the dependence that are reaquried in it.
+
+
+package com.example.StudentMangementSystem.Student1.Repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.example.StudentMangementSystem.Student1.Entity.Login;
+
+@Repository
+public interface LoginTeacherRepository extends  JpaRepository<Login,Long> {
+
+    Login findByUsernameAndPassword(String username, String password);
+    
+}
+
+-->In a Repository package in the src/main/java,Create an LoginStudentRepository interface extending JpaRepository<StudentRegistration, Long> to handle CRUD operations.
+
+*In the LoginStudentRepository interface ,use @Reapository annotation marks to define it is repository component in spring it add all the dependence that are reaquried in it.
+
+
+package com.example.StudentMangementSystem.Student1.Repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.example.StudentMangementSystem.Student1.Entity.StudentRegistration;
+
+@Repository
+public interface StudentRegistrationRepository extends JpaRepository<StudentRegistration, Long> {
+
+}
+
+
+
+                   ******************************************************************************************************************************************
+
+
+-->creating a Service package in the src/main/java,Create a interface LoginService that consists of the methods that perfrom the operations.
+
+
+package com.example.StudentMangementSystem.Student1.Service;
+
+import com.example.StudentMangementSystem.Student1.Entity.Login;
+import com.example.StudentMangementSystem.Student1.Entity.StudentRegistration;
+
+public interface LoginService {
+    public StudentRegistration studentLogin(String emailId, String regestrationNumber);
+
+    public Login HodLogin(String username, String password);
+
+    public Login TeacherLogin(String username, String password);
+}
+
+
+
+                   ******************************************************************************************************************************************
+
+
+-->In the Service package in the src/main/java,Create a Class LoginServiceImp that extends the interface HodService form the same package Service . It contains the actual implementation of CRUD operations for Login.
+
+*In the LoginServiceImp class which was implements LoginService interface ,use @Service annotation marks to define it is Service component in spring it add all the dependence that are reaquried in it.
+
+*LoginServiceImp uses LoginRepository to perfrom crud operations realeted to Login Table.
+
+*In the Class contains variou method such as HodLogin,TeacherLogin,studentLogin that contains actual logic in the method.
+
+*with the help of StudentRegistration Table the Student will login .
+
+
+package com.example.StudentMangementSystem.Student1.Service;
+
+import org.springframework.stereotype.Service;
+
+import com.example.StudentMangementSystem.Student1.Entity.Login;
+import com.example.StudentMangementSystem.Student1.Entity.StudentRegistration;
+import com.example.StudentMangementSystem.Student1.Repository.LoginHodRepository;
+import com.example.StudentMangementSystem.Student1.Repository.LoginStudentRepository;
+import com.example.StudentMangementSystem.Student1.Repository.LoginTeacherRepository;
+
+@Service
+public class LoginServiceImp implements LoginService {
+
+    private final LoginStudentRepository loginStudentRepository;
+    private final LoginHodRepository hodRepository;
+    private final LoginTeacherRepository loginTeacherRepository;
+
+    public LoginServiceImp(LoginStudentRepository loginStudentRepository, LoginHodRepository hodRepository,
+            LoginTeacherRepository loginTeacherRepository) {
+        this.loginStudentRepository = loginStudentRepository;
+        this.hodRepository = hodRepository;
+        this.loginTeacherRepository = loginTeacherRepository;
+    }
+
+    public StudentRegistration studentLogin(String emailId, String registrationNumber) {
+
+        if (emailId == null || registrationNumber == null) {
+
+            return null;
+        }
+
+        StudentRegistration studentRegistration = loginStudentRepository.findByEmailIdAndRegistrationNumber(emailId,
+                registrationNumber);
+        return studentRegistration;
+    }
+
+    public Login HodLogin(String username, String password) {
+
+        if (username == null || password == null) {
+
+            return null;
+        }
+
+        Login login = hodRepository.findByUsernameAndPassword(username, password);
+        return login;
+    }
+
+    @Override
+    public Login TeacherLogin(String username, String password) {
+
+        if (username == null || password == null) {
+
+            return null;
+        }
+
+        Login login = loginTeacherRepository.findByUsernameAndPassword(username, password);
+        return login;
+
+    }
+
+}
+
+
+
+
+                   ******************************************************************************************************************************************
+
+
+
+-->Create  a Controller package in the src/main/java,then create a class LoginHodController used to perform Login operation by handling the http requets.
+
+*In the LoginHodController Class ,use @RestController annotation marks to define it is Controller component in spring it add all the dependence that are reaquried in it.
+
+*In the LoginHodController Class,it is used to perform http requets ,its call the LoginService to perfom the logic in it.
+
+
+package com.example.StudentMangementSystem.Student1.Controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.StudentMangementSystem.Student1.Entity.Login;
+import com.example.StudentMangementSystem.Student1.Service.LoginService;
+
+@RestController
+@RequestMapping("/Login")
+@CrossOrigin(origins = "http://localhost:3000")
+public class LoginHodController {
+    @Autowired
+    private LoginService loginService;
+
+    @GetMapping("/HodLogin/{username}/{password}")
+    public String HodLogin(@PathVariable("username") String username, @PathVariable("password") String password) {
+        Login login = loginService.HodLogin(username, password);
+
+        if (login != null) {
+            return "Login";
+        } else {
+
+            throw new IllegalStateException("Login failed");
+        }
+    }
+}
+
+
+-->In  a Controller package in the src/main/java,then create a class LoginTeacherController used to perform Login operation by handling the http requets.
+
+*In the LoginTeacherController Class ,use @RestController annotation marks to define it is Controller component in spring it add all the dependence that are reaquried in it.
+
+*In the LoginTeacherController Class,it is used to perform http requets ,its call the LoginService to perfom the logic in it.
+
+
+package com.example.StudentMangementSystem.Student1.Controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.StudentMangementSystem.Student1.Entity.Login;
+import com.example.StudentMangementSystem.Student1.Service.LoginService;
+
+@RestController
+@RequestMapping("/Login")
+@CrossOrigin(origins = "http://localhost:3000")
+public class LoginTeacherController {
+    @Autowired
+    private LoginService loginService;
+
+    String name;
+
+    @GetMapping("/TeacherLogin/{username}/{password}")
+    public String HodLogin(@PathVariable("username") String username, @PathVariable("password") String password) {
+        Login login = loginService.TeacherLogin(username, password);
+
+        if (login != null) {
+            name = username;
+            return "Login";
+        } else {
+
+            throw new IllegalStateException("Login failed");
+        }
+    }
+}
+
+
+
+-->In  a Controller package in the src/main/java,then create a class LoginStudentController used to perform Login operation by handling the http requets.
+
+*In the LoginStudentController Class ,use @RestController annotation marks to define it is Controller component in spring it add all the dependence that are reaquried in it.
+
+*In the LoginStudentController Class,it is used to perform http requets ,its call the LoginService to perfom the logic in it.
+
+
+package com.example.StudentMangementSystem.Student1.Controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.StudentMangementSystem.Student1.Entity.StudentRegistration;
+import com.example.StudentMangementSystem.Student1.Service.LoginService;
+
+@RestController
+@RequestMapping("/StudentLogin")
+@CrossOrigin(origins = "http://localhost:3000")
+public class LoginStudentController {
+    @Autowired
+    private LoginService loginStudentService;
+    public String registration;
+    public String years;
+
+    @GetMapping("/{emailId}/{registrationNumber}")
+    public String studentLogin(@PathVariable("emailId") String emailId,
+            @PathVariable("registrationNumber") String registrationNumber) {
+        StudentRegistration studentRegistration = loginStudentService.studentLogin(emailId, registrationNumber);
+        registration = registrationNumber;
+
+        if (studentRegistration != null) {
+            years = studentRegistration.getYear();
+            return "Login";
+        } else {
+            return "Login Failed";
+        }
+
+    }
+}
+
+
+
+                           ******************************************************************************************************************************
+
+                                                                           FRONTEND - REACTJS
+
+
+                           ******************************************************************************************************************************
+
+FRONTEND DOCUMENTATION
+
+App.js
+
+The reactjs start with the App.js file , in this a had import all the various js files which are requreied in the project,when we click on the path then the page redirect to corresponding
+ element.
+
+
+import React from "react";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
+import "./App.css";
+import AddSubjectHod from "./Components/Hod/AddSubjectHod";
+import AllSubHod from "./Components/Hod/AllSubHod";
+import EditSubHod from "./Components/Hod/EditSubHod";
+import HodLogin from "./Components/Hod/LoginHod";
+import AddSubStudent from "./Components/Student/AddSubStudent";
+import AllSubStudent from "./Components/Student/AllSubStudent";
+import SelectedSubjects from "./Components/Student/SelectedSubjects";
+import StudentLogin from "./Components/Student/StudentLogin";
+import StudentReg from "./Components/Student/StudentReg";
+import AddUrlTeacher from "./Components/Teacher/AddUrlTeacher";
+import AllSubTearcher from "./Components/Teacher/AllSubTearcher";
+import EditUrlTeacher from "./Components/Teacher/EditUrlTeacher";
+import TeacherLogin from "./Components/Teacher/TeacherLogin";
+import NavBar from "./Components/common/NavBar";
+import NavBarTeacher from "./Components/common/NavBarTeacher";
+import Main from "./Main";
+
+function App() {
+  return (
+    <Router>
+      <div className="container mt-5">
+        <Routes>
+        <Route path="/" element={<Main />} />
+        {/* <Route path="/HodLogin" element={<HodNavBar />}/> */}
+          <Route path="/Teacher" element={<NavBarTeacher />}/>
+          <Route path="/TeacherLogin" element={<TeacherLogin />} />
+          <Route path="/Hod" element={<NavBar />} />
+          <Route path="/allSubjectsteacher" element={<AllSubTearcher />} />
+          <Route path="/addUrl" element={<AddUrlTeacher />} />
+          <Route path="/editUrl/:subCode" element={<EditUrlTeacher />} />
+          <Route path="/StudentRegistration" element={<StudentReg />} />
+          <Route path="/studentlogin" element={<StudentLogin />} />
+          <Route path="/allSubjectsStudent" element={<AllSubStudent />} />
+          <Route
+            path="/selectedSubjectsStudent"
+            element={<SelectedSubjects />}
+          />
+          <Route path="/addSubjects/:subCode" element={<SelectedSubjects />} />
+          <Route path="/HodLogin" element={<HodLogin />} />
+          <Route path="/allSubjects" element={<AllSubHod />} />
+          <Route path="/addSubjects" element={<AddSubjectHod />} />
+          <Route path="/editSubject/:year/:subCode" element={<EditSubHod />} />
+          <Route path="/addSubjects/:subCode" element={<AddSubStudent />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
+
+            ********************************************************************************************************************************************************
+Main.js
+
+This file represents the main page of the application. It contains a NavBarLogin component, which likely provides navigation or login functionality
+
+import React from 'react';
+import NavBarLogin from './NavBarLogin';
+
+const Main = () => {
+  return (
+    <div>
+      <NavBarLogin />
+     
+    </div>
+  );
+};
+
+export default Main;
+
+
+              ********************************************************************************************************************************************************
+
+NavBarHod.js
+
+"Head Of The Department": Represents the main branding of the navbar.
+"All Subjects": Links to the page displaying all subjects.
+"Add Subjects": Redirects to the page where the HOD can add new subjects.
+"Logout": Presumably used to log out from the application.
+
+
+import React from "react";
+import { Link } from "react-router-dom";
+
+const NavBarHod = () => {
+	return (
+		<nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-5">
+			<div className="container-fluid">
+				<Link className="navbar-brand">
+					Head Of The Department
+				</Link>
+			<div>
+            <ul className="navbar-nav">
+						<li className="nav-item">
+							<Link
+								className="nav-link active"
+								aria-current="page"
+								to="/allSubjects">
+								All Subjects
+							</Link>
+						</li>
+					</ul>
+            </div>
+				<div
+					className="collapse navbar-collapse justify-content-between " // Use justify-content-between class to space items
+					id="navbarNav">
+					<ul className="navbar-nav">
+						<li className="nav-item">
+							<Link
+								className="nav-link active"
+								aria-current="page"
+								to="/addSubjects">
+								Add Subjects
+							</Link>
+						</li>
+					</ul>
+                  
+					<ul className="navbar-nav">
+						<li className="nav-item">
+							<Link
+								className="nav-link"
+								to="/logout">
+								Logout
+							</Link>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+	);
+};
+
+export default NavBarHod;
+
+
+              ********************************************************************************************************************************************************
+
+LoginHod.js
+
+*Utilizes the useState hook to manage user credentials (username and password).
+
+*changeHandler function updates the state when input values change.
+
+*submitHandler triggers on form submission,Uses Axios to send a GET request with the provided credentials to the server,Upon success, redirects to the HOD dashboard ('/Hod').
+Handles errors and logs them to the console.
+
+import axios from 'axios'; // Import axios
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import NavBarHod from './NavBarHod';
+
+const LoginHod = () => {
+  const navigate = useNavigate();
+  const [credentials, setCredentials] = useState({
+    username: '',
+    password: '',
+  });
+
+  const changeHandler = (e) => {
+    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+  };
+
+  const submitHandler = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.get(`http://localhost:8090/Login/HodLogin/${credentials.username}/${credentials.password}`);
+      console.log(response.data); // Log the response data if needed
+      navigate('/Hod');
+    } catch (error) {
+      console.error('Error:', error);
+      // Handle error or show a message to the user
+    }
+  };
+
+  return (
+    <div>
+      <NavBarHod />
+      {/* HodNavBar or any other component related to header */}
+      <div className='container w-50 mt-5'>
+        <div className='card shadow p-3'>
+          <form onSubmit={submitHandler}>
+            <div className="mb-3">
+              <h2>Hod</h2>
+              <label htmlFor="exampleInputusername1" className="form-label">Username</label>
+              <input
+                type="text"
+                className="form-control"
+                id="exampleInputusername1"
+                aria-describedby="usernameHelp"
+                name="username"
+                value={credentials.username}
+                onChange={changeHandler}
+              />
+              <div id="usernameHelp" className="form-text">We'll never share your username with anyone else.</div>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="exampleInputPassword1" className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-control"
+                id="exampleInputPassword1"
+                name='password'
+                value={credentials.password}
+                onChange={changeHandler}
+              />
+            </div>
+            <button type="submit" className="btn btn-success">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginHod;
+
+
+              ********************************************************************************************************************************************************
+
+AddSubjects.js
+
+*Manages subject details using the useState hook,handleInputChange updates state values as users input subject information.
+
+*saveSubjects function submits the subject data to the server via an Axios POST request,Upon success, navigates the user to the 'allSubjects' page,Handles potential errors and logs them to the console
+
+
+import axios from "axios";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import NavBarHod from "./NavBarHod";
+const AddSubjects = () => {
+    let navigate = useNavigate();
+    const [subjects, setSubjects] = useState({
+        year: "",
+        subName: "",
+        subCode: "",
+        teacherName: "",
+    });
+
+    const { year, subName, subCode, teacherName } = subjects;
+
+    const handleInputChange = (e) => {
+        setSubjects({
+            ...subjects,
+            [e.target.name]: e.target.value,
+        });
+    };
+
+    const saveSubjects = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post(
+                "http://localhost:8090/HOD/addTheSub",
+                subjects
+            );
+            navigate("/allSubjects");
+        } catch (error) {
+            console.error("Error adding subject:", error);
+            // Handle error states, show user a message, etc.
+        }
+    };
+
+    return (
+        <div>
+            <NavBarHod />
+        <div className="col-sm-8 py-2 px-5 offset-2 shadow">
+            <h2 className="mt-5">Add subjects</h2>
+            <form onSubmit={(e) => saveSubjects(e)}>
+                <div className="input-group mb-5">
+                    <label className="input-group-text" htmlFor="year">
+                        Year
+                    </label>
+                    <input
+                        className="form-control col-sm-6"
+                        type="text"
+                        name="year"
+                        id="year"
+                        required
+                        value={year}
+                        onChange={(e) => handleInputChange(e)}
+                    />
+                </div>
+
+                <div className="input-group mb-5">
+                    <label className="input-group-text" htmlFor="subName">
+                        Subject Name
+                    </label>
+                    <input
+                        className="form-control col-sm-6"
+                        type="text"
+                        name="subName"
+                        id="subName"
+                        required
+                        value={subName}
+                        onChange={(e) => handleInputChange(e)}
+                    />
+                </div>
+
+                <div className="input-group mb-5">
+                    <label className="input-group-text" htmlFor="subCode">
+                        Subject Code
+                    </label>
+                    <input
+                        className="form-control col-sm-6"
+                        type="text"
+                        name="subCode"
+                        id="subCode"
+                        required
+                        value={subCode}
+                        onChange={(e) => handleInputChange(e)}
+                    />
+                </div>
+
+                <div className="input-group mb-5">
+                    <label className="input-group-text" htmlFor="teacherName">
+                        Teacher Name
+                    </label>
+                    <input
+                        className="form-control col-sm-6"
+                        type="text"
+                        name="teacherName"
+                        id="teacherName"
+                        required
+                        value={teacherName}
+                        onChange={(e) => handleInputChange(e)}
+                    />
+                </div>
+
+                <div className="row mb-5">
+                    <div className="col-sm-2">
+                        <button
+                            type="submit"
+                            className="btn btn-outline-success btn-lg"
+                        >
+                            Save
+                        </button>
+                    </div>
+
+                    <div className="col-sm-2">
+                        <Link
+                            to={"/allSubjects"}
+                            className="btn btn-outline-warning btn-lg"
+                        >
+                            Cancel
+                        </Link>
+                    </div>
+                </div>
+            </form>
+        </div>
+        </div>
+    );
+};
+
+export default AddSubjects;
+
+
+
+              ********************************************************************************************************************************************************
+
+
+EditSubHod.js
+
+*Utilizes useState and useEffect hooks to manage subject details and load data from the server when the component mounts,Fetches subject data using an Axios GET request based on the 
+
+provided parameters (year and subName).
+
+*handleInputChange updates the subject details based on user input,updateSubject sends an Axios PUT request to update subject information,Handles errors that may occur during the update process.
+
+
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+
+import { Link, useNavigate, useParams } from "react-router-dom";
+import NavBarHod from "./NavBarHod";
+const EditSubHod = () => {
+    const navigate = useNavigate();
+    const { year, subName } = useParams(); 
+    const [subject, setSubject] = useState({
+        year: "",
+        subName: "",
+        subCode: "",
+        teacherName: "",
+        // Add more fields as needed for the subject
+        // For example: position, salary, etc.
+    });
+
+    useEffect(() => {
+        loadSubject();
+    }, []);
+
+    const loadSubject = async () => {
+        try {
+            const result = await axios.get(`http://localhost:8090/HOD/Subjects/${year}/${subName}`);
+            setSubject(result.data);
+        } catch (error) {
+            console.error("Error loading subject:", error);
+        }
+    };
+
+    const handleInputChange = (e) => {
+        setSubject({
+            ...subject,
+            [e.target.name]: e.target.value,
+        });
+    };
+
+    const { subCode, teacherName } = subject; // Destructuring subCode and teacherName from state
+
+    const updateSubject = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.put(`http://localhost:8090/HOD/updateSubjectsDetails/${year}/${subName}`, subject);
+            navigate("/allSubjects");
+        } catch (error) {
+            console.error("Error updating subject:", error);
+        }
+      
+    };
+
+    return (
+        <div>
+        <NavBarHod />
+        <div className="col-sm-8 py-2 px-5 offset-2 shadow">
+            <h2 className="mt-5">Edit Subject</h2>
+            <form onSubmit={(e) => updateSubject(e)}>
+                <div className="input-group mb-5">
+                    <label className="input-group-text" htmlFor="year">
+                        Year
+                    </label>
+                    <input
+                        className="form-control col-sm-6"
+                        type="text"
+                        name="year"
+                        id="year"
+                        required
+                        value={subject.year} 
+                        onChange={(e) => handleInputChange(e)}
+                    />
+                </div>
+                <div className="input-group mb-5">
+                    <label className="input-group-text" htmlFor="subName">
+                        Subject Name
+                    </label>
+                    <input
+                        className="form-control col-sm-6"
+                        type="text"
+                        name="subName"
+                        id="subName"
+                        required
+                        value={subName}
+                        onChange={(e) => handleInputChange(e)}
+                    />
+                </div>
+                <div className="input-group mb-5">
+                    <label className="input-group-text" htmlFor="subCode">
+                        Subject Code
+                    </label>
+                    <input
+                        className="form-control col-sm-6"
+                        type="text"
+                        name="subCode"
+                        id="subCode"
+                        required
+                        value={subCode} // Using destructured subCode
+                        onChange={(e) => handleInputChange(e)}
+                    />
+                </div>
+                <div className="input-group mb-5">
+                    <label className="input-group-text" htmlFor="teacherName">
+                        Teacher Name
+                    </label>
+                    <input
+                        className="form-control col-sm-6"
+                        type="text"
+                        name="teacherName"
+                        id="teacherName"
+                        required
+                        value={teacherName} // Using destructured teacherName
+                        onChange={(e) => handleInputChange(e)}
+                    />
+                </div>
+                {/* Add other input fields for subject details */}
+                <div className="row mb-5">
+                    <div className="col-sm-2">
+                        <button
+                            type="submit"
+                            className="btn btn-outline-success btn-lg"
+                        >
+                            Save
+                        </button>
+                    </div>
+                    <div className="col-sm-2">
+                        <Link
+                            to={"/view-subjects"}
+                            className="btn btn-outline-warning btn-lg"
+                        >
+                            Cancel
+                        </Link>
+                    </div>
+                </div>
+            </form>
+        </div>
+        </div>
+    );
+};
+
+export default EditSubHod;
+
+
+              ********************************************************************************************************************************************************
+
+TeacherNarBar.js
+
+*It is the navbar that contains of home and Teacher.
+
+import React from 'react';
+import { Link } from "react-router-dom";
+const TeacherNarBar = () => {
+  return (
+    <div>
+     	<nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-5">
+
+            <div className="container-fluid">
+				<Link className="navbar-brand"
+                to="/">
+					Home
+				</Link>
+			</div>
+            <div className="container-fluid">
+				<Link className="navbar-brand">
+					Teacher
+				</Link>
+			</div>
+            </nav>
+    </div>
+  )
+}
+
+export default TeacherNarBar
+
+
+              ********************************************************************************************************************************************************
+
+NavBarTeacher.js
+
+*This is the another NavBar at the teacher side after the login ,contains Teacher,All Subjects,add Url and Logout.
+
+
+import React from "react";
+import { Link } from "react-router-dom";
+
+const NavBarTeacher = () => {
+	return (
+		<nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-5">
+			<div className="container-fluid">
+				<Link className="navbar-brand" 
+				to="/Teacher">
+					Teacher
+				</Link>
+			<div>
+            <ul className="navbar-nav">
+						<li className="nav-item">
+							<Link
+								className="nav-link active"
+								aria-current="page"
+								to="/allSubjectsteacher">
+								All Subjects
+							</Link>
+						</li>
+					</ul>
+            </div>
+				<div
+					className="collapse navbar-collapse justify-content-between " // Use justify-content-between class to space items
+					id="navbarNav">
+					<ul className="navbar-nav">
+						<li className="nav-item">
+							<Link
+								className="nav-link active"
+								aria-current="page"
+								to="/addUrl">
+								Add URL
+							</Link>
+						</li>
+					</ul>
+                  
+					<ul className="navbar-nav">
+						<li className="nav-item">
+							<Link
+								className="nav-link"
+								to="/">
+								Logout
+							</Link>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+	);
+};
+
+export default NavBarTeacher;
+
+
+
+                   ********************************************************************************************************************************************************
+
+TeacherLogin.js
+
+*Utilizes the useState hook to manage the credentials state, which stores the teacher's username and password.
+
+*changeHandler: Updates the state based on the user's input for the username and password fields.
+
+*ndpoint: Sends a GET request to the server endpoint (http://localhost:8090/Login/TeacherLogin) to authenticate the teacher's credentials.
+
+import axios from 'axios'; // Import axios
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import TeacherNavBar from './TeacherNavBar';
+
+const TeacherLogin = () => {
+  const navigate = useNavigate();
+  const [credentials, setCredentials] = useState({
+    username: '',
+    password: '',
+  });
+
+  const changeHandler = (e) => {
+    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+  };
+
+  const submitHandler = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.get(`http://localhost:8090/Login/TeacherLogin/${credentials.username}/${credentials.password}`);
+      console.log(response.data); // Log the response data if needed
+      navigate('/Teacher');
+    } catch (error) {
+      console.error('Error:', error);
+      // Handle error or show a message to the user
+    }
+  };
+
+  return (
+    <div>
+      <TeacherNavBar />
+      {/* HodNavBar or any other component related to header */}
+      <div className='container w-50 mt-5'>
+        <div className='card shadow p-3'>
+          <form onSubmit={submitHandler}>
+            <div className="mb-3">
+              <h2>Teacher</h2>
+              <label htmlFor="exampleInputusername1" className="form-label">Username</label>
+              <input
+                type="text"
+                className="form-control"
+                id="exampleInputusername1"
+                aria-describedby="usernameHelp"
+                name="username"
+                value={credentials.username}
+                onChange={changeHandler}
+              />
+              <div id="usernameHelp" className="form-text">We'll never share your username with anyone else.</div>
+            </div>
+            <div className="mb-3">
+              <label htmlFor="exampleInputPassword1" className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-control"
+                id="exampleInputPassword1"
+                name='password'
+                value={credentials.password}
+                onChange={changeHandler}
+              />
+            </div>
+            <button type="submit" className="btn btn-success">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TeacherLogin;
+
+
+
+
+                   ********************************************************************************************************************************************************
+
+AllSubTearcher.js
+
+*Utilizes axios to make an API call to retrieve data regarding teachers and their assigned subjects,Maintains a state variable teachers to store the fetched data.
+
+*Renders a table displaying teacher-related information, such as year, subject name, subject code, teacher name, and URL,Includes a filter mechanism to search for specific subjects based on the subject name.
+
+*Provides an edit button (<FaEdit />) linked to the /editUrl/:subCode route for each subject, allowing editing of the URL associated with a particular subject.
+
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { FaEdit } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import NavBarTeacher from "./NavBarTeacher";
+
+const AllSubTearcher = () => {
+  const [teachers, setTeachers] = useState([]);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    loadTeachers();
+  }, []);
+
+  const loadTeachers = async () => {
+    try {
+      const response = await axios.get("http://localhost:8090/Teacher/");
+      setTeachers(response.data);
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+  };
+
+  return (
+    <div>    < NavBarTeacher />
+    <section>
+      {/* Your Search component can be added here */}
+      <table className="table table-bordered table-hover shadow">
+        <thead>
+          <tr className="text-center">
+            <th>ID</th>
+            <th>YEAR</th>
+            <th>Subject Name</th>
+            <th>Subject Code</th>
+            <th>Teacher Name</th>
+            <th>URL</th>
+            <th colSpan="3">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="text-center">
+          {teachers
+            .filter((teacher) =>
+              teacher.subName.toLowerCase().includes(search.toLowerCase())
+            )
+            .map((teacher, index) => (
+              <tr key={index}>
+                <th scope="row">{index + 1}</th>
+                <td>{teacher.year}</td>
+                <td>{teacher.subName}</td>
+                <td>{teacher.subCode}</td>
+                <td>{teacher.teacherName}</td>
+                <td>{teacher.url}</td>
+                
+                <td className="mx-2">
+                  <Link
+                    to={`/editUrl/${teacher.subCode}`}
+                    className="btn btn-warning"
+                  >
+                    <FaEdit />
+                  </Link>
+                </td>
+                {/* Add delete functionality here */}
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </section>
+    </div>
+  );
+};
+
+export default AllSubTearcher;
+
+
+
+                  ********************************************************************************************************************************************************
+
+AddUrlTeacher.js
+
+*Utilizes useParams from react-router-dom to get the subCode parameter from the URL,Manages the teacher state, which includes fields like url, subName, subCode, and teacherName.
+
+*Fetches initial data related to a specific subject using the subCode parameter.
+
+
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import NavBarTeacher from "./NavBarTeacher";
+
+const AddUrlTeacher = () => {
+    const navigate = useNavigate();
+    const { subCode } = useParams(); 
+    const [teacher, setTeacher] = useState({
+        url: "",
+        subName: "",
+        subCode: subCode,
+        teacherName: ""
+    });
+
+    useEffect(() => {
+        loadTeacher();
+    }, []);
+
+    const loadTeacher = async () => {
+        try {
+            const result = await axios.get(`http://localhost:8090/Teacher/Teacher/${subCode}`);
+            setTeacher(result.data); // Assuming the API response contains all the necessary teacher data
+        } catch (error) {
+            console.error("Error loading teacher:", error);
+        }
+    };
+
+    const handleInputChange = (e) => {
+        setTeacher({
+            ...teacher,
+            [e.target.name]: e.target.value,
+        });
+    };
+
+    const { url, subName, teacherName } = teacher;
+
+    const updateTeacher = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post(`http://localhost:8090/Teacher/material/${subCode}`, teacher);
+            navigate("/allSubjectsteacher");
+        } catch (error) {
+            console.error("Error updating teacher:", error);
+        }
+    };
+
+    return (
+        <div>
+            <NavBarTeacher />
+            <div className="col-sm-8 py-2 px-5 offset-2 shadow">
+                <h2 className="mt-5">Add URL</h2>
+                <form onSubmit={(e) => updateTeacher(e)}>
+                    <div className="input-group mb-5">
+                        <label className="input-group-text" htmlFor="url">
+                            URL
+                        </label>
+                        <input
+                            className="form-control col-sm-6"
+                            type="text"
+                            name="url"
+                            id="url"
+                            required
+                            value={url}
+                            onChange={(e) => handleInputChange(e)}
+                        />
+                    </div>
+                    {/* <div className="input-group mb-5">
+                        <label className="input-group-text" htmlFor="subName">
+                            Subject Name
+                        </label>
+                        <input
+                            className="form-control col-sm-6"
+                            type="text"
+                            name="subName"
+                            id="subName"
+                            required
+                            value={subName}
+                            onChange={(e) => handleInputChange(e)}
+                        />
+                    </div> */}
+                    <div className="input-group mb-5">
+                        <label className="input-group-text" htmlFor="subCode">
+                            Subject Code
+                        </label>
+                        <input
+                            className="form-control col-sm-6"
+                            type="text"
+                            name="subCode"
+                            id="subCode"
+                            required
+                            value={subCode}
+                            disabled // Disable editing of subCode from the URL
+                        />
+                    </div>
+                    {/* <div className="input-group mb-5">
+                        <label className="input-group-text" htmlFor="teacherName">
+                            Teacher Name
+                        </label>
+                        <input
+                            className="form-control col-sm-6"
+                            type="text"
+                            name="teacherName"
+                            id="teacherName"
+                            required
+                            value={teacherName}
+                            onChange={(e) => handleInputChange(e)}
+                        />
+                    </div> */}
+                    <div className="row mb-5">
+                        <div className="col-sm-2">
+                            <button
+                                type="submit"
+                                className="btn btn-outline-success btn-lg"
+                            >
+                                Save
+                            </button>
+                        </div>
+                        <div className="col-sm-2">
+                            <Link
+                                to={"/allSubjectsteacher"}
+                                className="btn btn-outline-warning btn-lg"
+                            >
+                                Cancel
+                            </Link>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default AddUrlTeacher;
+
+
+
+                  ********************************************************************************************************************************************************
+
+EditUrlTeacher.js
+
+*Utilizes useParams from react-router-dom to obtain the subCode parameter from the URL,Manages the teacher state, which includes fields like url, subName, subCode, and teacherName.
+
+*Fetches initial data related to a specific subject using the subCode parameter,Renders a form that allows a teacher to edit the URL associated with a particular subject.
+
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import NavBarTeacher from "./NavBarTeacher";
+
+const EditUrlTeacher = () => {
+    const navigate = useNavigate();
+    const { subCode } = useParams(); 
+    const [teacher, setTeacher] = useState({
+        url: "",
+        subName: "",
+        subCode: subCode,
+        teacherName: ""
+    });
+
+    useEffect(() => {
+        loadTeacher();
+    }, []);
+
+    const loadTeacher = async () => {
+        try {
+            const result = await axios.get(`http://localhost:8090/Teacher/Teacher/${subCode}`);
+            setTeacher(result.data); // Assuming the API response contains all the necessary teacher data
+        } catch (error) {
+            console.error("Error loading teacher:", error);
+        }
+    };
+
+    const handleInputChange = (e) => {
+        setTeacher({
+            ...teacher,
+            [e.target.name]: e.target.value,
+        });
+    };
+
+    const { url, subName, teacherName } = teacher;
+
+    const updateTeacher = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.put(`http://localhost:8090/Teacher/material/${subCode}`, teacher);
+            navigate("/allSubjectsteacher");
+        } catch (error) {
+            console.error("Error updating teacher:", error);
+        }
+    };
+
+    return (
+        <div>
+            <NavBarTeacher />
+            <div className="col-sm-8 py-2 px-5 offset-2 shadow">
+                <h2 className="mt-5">Edit URL</h2>
+                <form onSubmit={(e) => updateTeacher(e)}>
+                    <div className="input-group mb-5">
+                        <label className="input-group-text" htmlFor="url">
+                            URL
+                        </label>
+                        <input
+                            className="form-control col-sm-6"
+                            type="text"
+                            name="url"
+                            id="url"
+                            required
+                            value={url}
+                            onChange={(e) => handleInputChange(e)}
+                        />
+                    </div>
+                    {/* <div className="input-group mb-5">
+                        <label className="input-group-text" htmlFor="subName">
+                            Subject Name
+                        </label>
+                        <input
+                            className="form-control col-sm-6"
+                            type="text"
+                            name="subName"
+                            id="subName"
+                            required
+                            value={subName}
+                            onChange={(e) => handleInputChange(e)}
+                        />
+                    </div> */}
+                    <div className="input-group mb-5">
+                        <label className="input-group-text" htmlFor="subCode">
+                            Subject Code
+                        </label>
+                        <input
+                            className="form-control col-sm-6"
+                            type="text"
+                            name="subCode"
+                            id="subCode"
+                            required
+                            value={subCode}
+                            disabled // Disable editing of subCode from the URL
+                        />
+                    </div>
+                    {/* <div className="input-group mb-5">
+                        <label className="input-group-text" htmlFor="teacherName">
+                            Teacher Name
+                        </label>
+                        <input
+                            className="form-control col-sm-6"
+                            type="text"
+                            name="teacherName"
+                            id="teacherName"
+                            required
+                            value={teacherName}
+                            onChange={(e) => handleInputChange(e)}
+                        />
+                    </div> */}
+                    <div className="row mb-5">
+                        <div className="col-sm-2">
+                            <button
+                                type="submit"
+                                className="btn btn-outline-success btn-lg"
+                            >
+                                Save
+                            </button>
+                        </div>
+                        <div className="col-sm-2">
+                            <Link
+                                to={"/allSubjectsteacher"}
+                                className="btn btn-outline-warning btn-lg"
+                            >
+                                Cancel
+                            </Link>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default EditUrlTeacher;
+
+
+
+                  ********************************************************************************************************************************************************
+
+  STUDENT
+
+StudentNavBar.js
+ 
+*In the file its consist of home and student ,used to redirect from the another page.
+
+
+import React from 'react';
+import { Link } from "react-router-dom";
+
+const StudentNavBar = () => {
+	return (
+	  <div>
+		<nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-5">
+		  <div className="container-fluid d-flex justify-content-start align-items-center">
+			<Link className="navbar-brand" to="/">Home</Link>
+			<span className="navbar-brand ml-3">Student</span>
+		  </div>
+		</nav>
+	  </div>
+	)
+  }
+
+export default StudentNavBar;
+
+
+
+                  ********************************************************************************************************************************************************
+
+
+Studentreg.js
+
+*Imports: React, useState, axios for HTTP requests, and useNavigate from React Router.
+
+*changeHandler: Updates the state when input values change.
+
+submitHandler: Handles form submission, sends a request to a backend server for student login verification using Axios, and redirects to /allSubjectsStudent on successful login.
+
+
+import axios from 'axios';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
+const Studentreg = () => {
+  const navigate = useNavigate();
+
+  const [credentials, setCredentials] = useState({
+    firstname: '',
+    lastname: '',
+    email: '',
+    branch: '',
+    year: '',
+    registrationNumber: '',
+    phoneNumber: '',
+  });
+
+  const changeHandler = (e) => {
+    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+  };
+
+  const submitHandler = async (e) => {
+    e.preventDefault();
+    console.log(credentials);
+    if (!credentials.registrationNumber.trim()) {
+      console.error('Register Number cannot be empty.');
+      return; // Do not proceed with form submission
+    }
+
+      try {
+         await axios.post(
+          "http://localhost:8090/Student/StudentRegistrations",credentials
+        );
+        navigate("/studentlogin");
+      } catch (error) {
+        console.error("Error adding StudentRegistration:", error);
+        if (error.response) {
+          console.log("Server response:", error.response.data);
+          // You can handle specific error messages here
+        }
+      }
+    };
+    
+
+
+  return (
+    <div className='container w-50 mt-5'>
+      <div className='card shadow p-3'>
+        <form onSubmit={submitHandler}>
+          <div className="mb-3">
+            <h2>STUDENT REGISTER</h2>
+            <label htmlFor="firstname" className="form-label">First Name</label>
+            <input type="text" className="form-control" name='firstname' value={credentials.firstname} onChange={changeHandler}/>
+            
+            <label htmlFor="lastname" className="form-label">Last Name</label>
+            <input type="text" className="form-control" name='lastname' value={credentials.lastname} onChange={changeHandler}/>
+            
+            <label htmlFor="email" className="form-label">Email address</label>
+            <input type="email" className="form-control" name='email' aria-describedby="emailHelp" value={credentials.email} onChange={changeHandler}/>
+            <div className="form-text">We'll never share your email with anyone else.</div>
+            
+            <label htmlFor="branch" className="form-label">Branch</label>
+            <input type="text" className="form-control" name='branch' value={credentials.branch} onChange={changeHandler}/>
+            
+            <label htmlFor="year" className="form-label">Year</label>
+            <input type="text" className="form-control" name='year' value={credentials.year} onChange={changeHandler}/>
+            
+            <label htmlFor="registrationNumber" className="form-label">Register Number</label>
+            <input type="text" className="form-control" name='registrationNumber' value={credentials.registrationNumber} onChange={changeHandler}/>
+            
+            <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
+            <input type="text" className="form-control" name='phoneNumber' value={credentials.phoneNumber} onChange={changeHandler}/>
+          </div>
+          <button type="submit" className="btn btn-primary">Submit</button>
+        </form>
+        <Link to="/studentlogin" className="mb-3">I'm already a user</Link>
+      </div>
+    </div>
+  );
+
+  }
+export default Studentreg;
+
+
+                  ********************************************************************************************************************************************************
+
+ NavBarStud.js
+
+*Structure: It displays a navigation bar with links to various sections for the student:All Subjects,Selected Subjects,Logout.
+
+import React from "react";
+import { Link } from "react-router-dom";
+
+const StudentNav = () => {
+	return (
+		<nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-5">
+			<div className="container-fluid">
+				<Link className="navbar-brand" to="/Student">
+					Student
+				</Link>
+				<div className="mb-2"></div> {/* Small space */}
+				<div>
+					<ul className="navbar-nav">
+						<li className="nav-item">
+							<Link
+								className="nav-link active"
+								aria-current="page"
+								to="/allSubjectsStudent"
+							>
+								All Subjects
+							</Link>
+						</li>
+					</ul>
+				</div>
+			
+				<div className="collapse navbar-collapse justify-content-between " id="navbarNav">
+					<ul className="navbar-nav">
+						<li className="nav-item">
+							<Link
+								className="nav-link active"
+								aria-current="page"
+								to="/selectedSubjectsStudent"
+							>
+								Selected Subject
+							</Link>
+						</li> 
+					</ul>
+
+					<ul className="navbar-nav">
+						<li className="nav-item">
+							<Link className="nav-link" to="/">
+								Logout
+							</Link>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+	);
+};
+
+export default StudentNav;
+
+
+
+                  ********************************************************************************************************************************************************
+
+AllSubStudent.js
+
+*imports: React, useState, useEffect for managing state and lifecycle, axios for HTTP requests, and StudentNav for navigation.
+State:
+Students: Stores an array of subjects fetched from the server.
+search: Manages the search input for filtering subjects.
+useEffect: Fetches the list of all available subjects when the component mounts.
+
+*loadStudents: Sends a GET request to retrieve all subjects and updates the state with the response.
+handleAddClick: Handles the addition of a subject to the student's selected subjects list upon button click. It sends a POST request to the server to add the selected subject.
+
+
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { FaPlus } from "react-icons/fa";
+import { useNavigate } from 'react-router-dom';
+import StudentNav from './StudentNav';
+const AllSubStudent = () => {
+  const navigate = useNavigate();
+  const [Students, setStudents] = useState([]);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
+  const loadStudents = async () => {
+    try {
+      const response = await axios.get("http://localhost:8090/Student/allSubjects");
+      setStudents(response.data);
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+  };
+
+  const handleAddClick = async (subCode) => {
+    try {
+     
+      await axios.post(`http://localhost:8090/Student/Subject/${subCode}`, {
+      
+        subCode: subCode 
+     
+    
+      });
+      // Perform any other actions after successful post if needed
+    } catch (error) {
+      console.error("Error adding data: ", error);
+    }
+  };
+
+  return (
+    <div>
+      <StudentNav />
+    <section>
+      {/* Your Search component can be added here */}
+      <table className="table table-bordered table-hover shadow">
+        <thead>
+          <tr className="text-center">
+            <th>ID</th>
+            <th>YEAR</th>
+            <th>Subject Name</th>
+            <th>Subject Code</th>
+            <th>Teacher Name</th>
+            <th>URL</th>
+          
+          </tr>
+        </thead>
+        <tbody className="text-center">
+          {Students
+            .filter((Student) =>
+              Student.subName.toLowerCase().includes(search.toLowerCase())
+            )
+            .map((Student, index) => (
+              <tr key={index}>
+                <th scope="row">{index + 1}</th>
+                <td>{Student.year}</td>
+                <td>{Student.subName}</td>
+                <td>{Student.subCode}</td>
+                <td>{Student.teacherName}</td>
+                <td>{Student.url}</td>
+                
+                <td className="mx-2">
+                <button
+                      className="btn btn-success"
+                      onClick={() => handleAddClick(Student.subCode)} // Pass subCode to the handler
+                    >
+                      <FaPlus />
+                    </button>
+              </td>
+              
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </section>
+    </div>
+  );
+};
+
+export default AllSubStudent;
+
+
+
+                  ********************************************************************************************************************************************************
+
+StudentNav.js
+
+*Imports: React, useState, useEffect for state management and lifecycle, axios for HTTP requests, and StudentNav for navigation.
+
+*students: Holds an array of selected subjects fetched from the server.
+search: Manages the search input for filtering selected subjects.
+useEffect: Fetches the list of selected subjects when the component mounts.
+
+*loadStudents: Sends a GET request to fetch the selected subjects and updates the state with the response,handleDelete: Handles the removal of a subject from the selected list. It sends a DELETE request to the server to delete the specified subject.
+
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { FaTrashAlt } from "react-icons/fa";
+import StudentNav from './StudentNav';
+const SelectedSubjects = () => {
+  const [students, setStudents] = useState([]);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
+  const loadStudents = async () => {
+    try {
+      const response = await axios.get("http://localhost:8090/Student/Subject");
+      setStudents(response.data);
+    } catch (error) {
+      console.error("Error fetching data: ", error);
+    }
+  };
+
+  const handleDelete = async (subCode) => {
+    try {
+      await axios.delete(`http://localhost:8090/Student/deleteSubject/${subCode}`);
+      loadStudents(); // Reload the subjects after deletion
+    } catch (error) {
+      console.error("Error deleting data: ", error);
+    }
+  };
+
+  return (
+    <div><StudentNav />
+    <section>
+      {/* Your Search component can be added here */}
+      <table className="table table-bordered table-hover shadow">
+        <thead>
+          <tr className="text-center">
+            <th>ID</th>
+            <th>Subject Name</th>
+            <th>Subject Code</th>
+            <th>Teacher Name</th>
+            <th>URL</th>
+            <th colSpan="3">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="text-center">
+          {students
+            .filter((student) =>
+              student.subName.toLowerCase().includes(search.toLowerCase())
+            )
+            .map((student, index) => (
+              <tr key={index}>
+                <th scope="row">{index + 1}</th>
+                <td>{student.subName}</td>
+                <td>{student.subCode}</td>
+                <td>{student.teacherName}</td>
+                <td>{student.url}</td>
+                <td className="mx-2">
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleDelete(student.subCode)}
+                  >
+                    <FaTrashAlt /> Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </section>
+    </div>
+  );
+};
+
+export default SelectedSubjects;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                  
